@@ -1,0 +1,388 @@
+---
+title: "Clases Latentes - Tesis parte I"
+author: "Catalina Miranda"
+date: "4 de septiembre de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+options(scipen=999)
+#Paquetes
+library(knitr)
+library(DT)
+library(plyr)
+library(dplyr)
+library(haven)
+library(texreg) 
+library(xtable) 
+library(kableExtra) 
+library(ggplot2)
+library(psych)
+library(purrr)
+library(tidyr)
+library(sjmisc)
+library(Hmisc)
+library(reshape)
+library(VIM)
+library(stringr)
+library(skimr)
+library(lme4)
+library(broom)
+library(survey)
+library(srvyr)
+library(poLCA)
+library(foreign)
+library(gdata)  #rename vars 
+library(stargazer)  #rename vars 
+library(lavaan)  #rename vars 
+library(vcd)  #para hacer tablas, graficos de torta, etc. 
+library(vcdExtra)  #rename vars 
+library(readstata13)  #rename vars 
+library(sjPlot)  #rename vars 
+```
+
+Cargar base de datos
+```{r}
+rm(list = ls()) #limpiar la memoria
+ruta<-setwd ("C:/Users/catac/Dropbox/F. Pap/Book_authoritarianism/Bases de datos")
+load("ICCS09.Rdata")
+load("ICCS16.Rdata")
+```
+
+```{r}
+iccs09= iccs09 %>%
+  dplyr::filter(COUNTRY == "CHL") 
+
+iccs16= iccs16 %>%
+  dplyr::filter(COUNTRY == "CHL") 
+
+```
+
+
+```{r}
+T09 = iccs09 %>%
+  mutate(time          = 2009) %>%
+  mutate(country       = COUNTRY) %>%
+  mutate(idcountry     = IDCNTRY) %>%
+  mutate(Electoral1    = 5 - IS2P32A) %>% # Votar elecciones local
+  mutate(Electoral2    = 5 - IS2P32B) %>% # Votar elecciones nacionales
+  mutate(Electoral3    = 5 - IS2P32E) %>% # Inscribirse en partido político
+  mutate(Electoral4    = 5 - IS2P32F) %>% # Inscribirse en un sindicato
+  mutate(Electoral5    = 5 - IS2P32G) %>% # Presentarse como candidato local
+  mutate(Activista1    = 5 - IS2P31E) %>% # Recolectar firmas
+  mutate(Activista2    = 5 - IS2P31F) %>% # Elegir no comprar productos
+  mutate(Activista3    = 5 - IS2P31G) %>% # Pintar eslóganes
+  mutate(Activista4    = 5 - IS2P31H) %>% # Bloquear tránsito
+  mutate(Activista5    = 5 - IS2P31I) %>% # Ocupar edificio
+  mutate(Activista6    = 5 - IS2P31D) %>% # Participar en manifestaciones
+  mutate(Compromiso1   = 5 - IS2P33B) %>% # Hablar sobre política
+  mutate(Compromiso2   = 5 - IS2P33D) %>% # Contribuir en discusión online
+  mutate(Compromiso3   = 5 - IS2P33E) %>% # Inscribirse en org sociales
+  mutate(Compromiso4   = 5 - IS2P33A) %>% # Voluntariado
+  mutate(totwgts       = TOTWGTS) %>%   #FINAL STUDENT WEIGHT
+  mutate(wgtfac1       = WGTFAC1) %>%   #SCHOOL BASE WEIGHT
+  mutate(wgtadj1s      = WGTADJ1S) %>%  #SCHOOL WEIGHT ADJUSTMENT-STUDENT STUDY
+  mutate(wgtfac2s      = WGTFAC2S) %>%  #CLASS WEIGHT FACTOR
+  mutate(wgtadj2s      = WGTADJ2S) %>%  #CLASS WEIGHT ADJUSTMENT
+  mutate(wgtadj3s      = WGTADJ3S) %>%  #STUDENT WEIGHT ADJUSTMENT
+  mutate(jkzones       = JKZONES) %>%   #JACKKNIFE ZONE - STUDENT STUDY
+  mutate(jkreps        = JKREPS)    #JACKKNIFE REPLICATE CODE
+  #select(411:428)
+  
+T016 = iccs16 %>%
+  mutate(time          = 2016) %>%
+  mutate(country       = COUNTRY) %>%
+  mutate(idcountry     = IDCNTRY) %>%
+  mutate(Electoral1    = 5 - IS3G31A) %>% # Votar elecciones local
+  mutate(Electoral2    = 5 - IS3G31B) %>% # Votar elecciones nacionales
+  mutate(Electoral3    = 5 - IS3G31E) %>% # Inscribirse en partido político
+  mutate(Electoral4    = 5 - IS3G31F) %>% # Inscribirse en un sindicato
+  mutate(Electoral5    = 5 - IS3G31G) %>% # Presentarse como candidato local
+  mutate(Activista1    = 5 - IS3G30C) %>% # Recolectar firmas
+  mutate(Activista2    = 5 - IS3G30H) %>% # Elegir no comprar productos
+  mutate(Activista3    = 5 - IS3G30I) %>% # Pintar eslóganes
+  mutate(Activista4    = 5 - IS3G30J) %>% # Bloquear tránsito
+  mutate(Activista5    = 5 - IS3G30K) %>% # Ocupar edificio
+  mutate(Activista6    = 5 - IS3G30D) %>% # Participar en manifestaciones
+  mutate(Compromiso1   = 5 - IS3G30A) %>% # Hablar sobre política
+  mutate(Compromiso2   = 5 - IS3G30E) %>% # Contribuir en discusión online
+  mutate(Compromiso3   = 5 - IS3G31H) %>% # Inscribirse en org sociales
+  mutate(Compromiso4   = 5 - IS3G31I) %>%  # Voluntariado
+  mutate(totwgts         = TOTWGTS) %>%   #FINAL STUDENT WEIGHT
+  mutate(wgtfac1         = WGTFAC1) %>%   #SCHOOL BASE WEIGHT
+  mutate(wgtadj1s        = WGTADJ1S) %>%  #SCHOOL WEIGHT ADJUSTMENT-STUDENT STUDY
+  mutate(wgtfac2s        = WGTFAC2S) %>%  #CLASS WEIGHT FACTOR
+  mutate(wgtadj2s        = WGTADJ2S) %>%  #CLASS WEIGHT ADJUSTMENT
+  mutate(wgtadj3s        = WGTADJ3S) %>%  #STUDENT WEIGHT ADJUSTMENT
+  mutate(jkzones         = JKZONES)  %>%  #JACKKNIFE ZONE - STUDENT STUDY
+  mutate(jkreps          = JKREPS)   #JACKKNIFE REPLICATE CODE
+  #select(519:536)
+
+#T_final <- rbind(T09, T016)
+```
+
+
+```{r}
+T09= T09 %>% #para que las variables aparezcan en este orden cuando muestre los graficos le pongo una letra antes. 
+  dplyr::mutate (Electoral1= ifelse(Electoral1<2, 1, 2)) %>%
+  dplyr::mutate (Electoral2= ifelse(Electoral2<2, 1, 2)) %>%
+  dplyr::mutate (Electoral3= ifelse(Electoral3<2, 1, 2)) %>%
+  dplyr::mutate (Electoral4= ifelse(Electoral4<2, 1, 2)) %>%
+  dplyr::mutate (Electoral5= ifelse(Electoral5<2, 1, 2)) %>%
+  dplyr::mutate (Activista1= ifelse(Activista1<2, 1, 2)) %>%
+  dplyr::mutate (Activista2= ifelse(Activista2<2, 1, 2)) %>%
+  dplyr::mutate (Activista3= ifelse(Activista3<2, 1, 2)) %>%
+  dplyr::mutate (Activista4= ifelse(Activista4<2, 1, 2)) %>%
+  dplyr::mutate (Activista5= ifelse(Activista5<2, 1, 2)) %>%
+  dplyr::mutate (Activista6= ifelse(Activista6<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso1= ifelse(Compromiso1<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso2= ifelse(Compromiso2<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso3= ifelse(Compromiso3<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso4= ifelse(Compromiso4<2, 1, 2)) %>%
+  dplyr::select(country, idcountry, time, Electoral1, Electoral2, Electoral3, Electoral4, Electoral5, Activista1, Activista2, Activista3, Activista4, Activista5, Activista6, Compromiso1, Compromiso2, Compromiso3, Compromiso4) 
+
+# 1 No
+# 2 sí
+
+T016= T016 %>% #para que las variables aparezcan en este orden cuando muestre los graficos le pongo una letra antes. 
+  dplyr::mutate (Electoral1= ifelse(Electoral1<2, 1, 2)) %>%
+  dplyr::mutate (Electoral2= ifelse(Electoral2<2, 1, 2)) %>%
+  dplyr::mutate (Electoral3= ifelse(Electoral3<2, 1, 2)) %>%
+  dplyr::mutate (Electoral4= ifelse(Electoral4<2, 1, 2)) %>%
+  dplyr::mutate (Electoral5= ifelse(Electoral5<2, 1, 2)) %>%
+  dplyr::mutate (Activista1= ifelse(Activista1<2, 1, 2)) %>%
+  dplyr::mutate (Activista2= ifelse(Activista2<2, 1, 2)) %>%
+  dplyr::mutate (Activista3= ifelse(Activista3<2, 1, 2)) %>%
+  dplyr::mutate (Activista4= ifelse(Activista4<2, 1, 2)) %>%
+  dplyr::mutate (Activista5= ifelse(Activista5<2, 1, 2)) %>%
+  dplyr::mutate (Activista6= ifelse(Activista6<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso1= ifelse(Compromiso1<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso2= ifelse(Compromiso2<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso3= ifelse(Compromiso3<2, 1, 2)) %>%
+  dplyr::mutate (Compromiso4= ifelse(Compromiso4<2, 1, 2)) %>%
+  dplyr::select(country, idcountry, time, Electoral1, Electoral2, Electoral3, Electoral4, Electoral5, Activista1, Activista2, Activista3, Activista4, Activista5, Activista6, Compromiso1, Compromiso2, Compromiso3, Compromiso4) 
+```
+
+
+```{r}
+T09=na.omit(T09)
+dim(T09)
+names(T09)
+
+
+T016=na.omit(T016)
+dim(T016)
+names(T016)
+```
+
+
+```{r}
+plot_likert(T09[4:18])
+plot_likert(T016[4:18])
+```
+
+```{r}
+## Explorar patrones de respuesta
+patterns=table(apply(T09[4:18], 1, paste, collapse=""))
+patterns #aqui vemos los patrones de respuesta que tenemos, por ejemplo el 11111 es el patron de los desconfiados por ejemeplo. 
+patterns_m=as.data.frame(patterns)
+patterns_m <- patterns_m[order(-patterns_m$Freq),] 
+patterns_m
+```
+
+```{r}
+## Estimar modelo
+f <- cbind(Electoral1, Electoral2, Electoral3, Electoral4, Electoral5, Activista1, Activista2, Activista3, Activista4, Activista5, Activista6, Compromiso1, Compromiso2, Compromiso3, Compromiso4)~1
+#help(poLCA) aqui creamos el vector de indicadores. 
+lca1 <- poLCA(f,T09, nclass=1, graphs=F)
+poLCA.entropy(lca1)
+
+set.seed(1234)
+lca2 <- poLCA(f,T09,nclass=2,graphs=F)
+poLCA.entropy(lca2)
+
+lca3 <- poLCA(f,T09, nclass=3,graphs=T) #LE PONGO TRUE AL GRAFICO PARA QUE ME MUESTRE LAS CLASES. 
+poLCA.entropy(lca3)
+
+lca4 <- poLCA(f,T09, nclass=4,graphs=F)
+poLCA.entropy(lca4)
+
+lca5 <- poLCA(f,T09, nclass=5,graphs=F)
+poLCA.entropy(lca5)
+
+```
+
+```{r}
+AIC.1 <-as.numeric(lca1$aic)
+AIC.2 <-as.numeric(lca2$aic)
+AIC.3 <-as.numeric(lca3$aic)
+AIC.4 <-as.numeric(lca4$aic)
+
+
+BIC.1 <-as.numeric(lca1$bic)
+BIC.2 <-as.numeric(lca2$bic)
+BIC.3 <-as.numeric(lca3$bic)
+BIC.4 <-as.numeric(lca4$bic)
+
+llik.1 <-as.numeric(lca1$llik)
+llik.2 <-as.numeric(lca2$llik)
+llik.3 <-as.numeric(lca3$llik)
+llik.4 <-as.numeric(lca4$llik)
+
+chisq.1 <- as.numeric(lca1$Chisq) #queremos que sea lo menos distinta posible de la esperada. 
+chisq.2 <- as.numeric(lca2$Chisq)
+chisq.3 <- as.numeric(lca3$Chisq)
+chisq.4 <- as.numeric(lca4$Chisq)
+
+G.1 <- as.numeric(lca1$Gsq)
+G.2 <- as.numeric(lca2$Gsq)
+G.3 <- as.numeric(lca3$Gsq)
+G.4 <- as.numeric(lca4$Gsq)
+
+n.obs1 <- as.numeric(lca1$Nobs)
+n.obs2 <- as.numeric(lca2$Nobs)
+n.obs3 <- as.numeric(lca3$Nobs)
+n.obs4 <- as.numeric(lca4$Nobs)
+
+#CreaciÃ³n de Vectores para TABLA DE COMPARACIÃ“N
+AIC <- c(AIC.1, AIC.2,AIC.3,AIC.4)
+BIC <- c(BIC.1, BIC.2,BIC.3,BIC.4)
+llik <- c(llik.1, llik.2,llik.3,llik.4)
+chi.cuadrado <- c(chisq.1, chisq.2,chisq.3,chisq.4)
+G2 <- c(G.1, G.2,G.3,G.4)
+N <- c(n.obs1, n.obs2,n.obs3,n.obs4)
+Modelos <- c("1 clase", "2 clases", "3 clases", "4 clases")
+
+```
+
+```{r}
+fit.indices <- data.frame(Modelos,AIC,BIC,llik,chi.cuadrado,G2,N)
+fit.indices
+```
+
+
+```{r}
+fit.lc2 <- data.frame(Modell=c("Model lc2"),
+                      BIC                         =lca2$bic,
+                      AIC                        = lca2$aic)
+
+fit.lc3 <- data.frame(Modell=c("Model lc3"),
+                      BIC                         =lca3$bic,
+                      AIC                        = lca3$aic)
+
+fit.lc4 <- data.frame(Modell=c("Model lc4"),
+                      BIC                         =lca4$bic,
+                      AIC                        = lca4$aic)
+
+fit.lc5 <- data.frame(Modell=c("Model lc5"),
+                      BIC                         =lca5$bic,
+                      AIC                        = lca5$aic)
+
+
+comp.fit.lca=rbind(fit.lc2,fit.lc3, fit.lc4, fit.lc5)
+print(comp.fit.lca) #hacemos una base de datos para comparar los estadisticos de ajuste de los modelos. 
+
+```
+
+
+
+```{r}
+## Explorar patrones de respuesta
+patterns=table(apply(T016[4:18], 1, paste, collapse=""))
+patterns #aqui vemos los patrones de respuesta que tenemos, por ejemplo el 11111 es el patron de los desconfiados por ejemeplo. 
+patterns_m=as.data.frame(patterns)
+patterns_m <- patterns_m[order(-patterns_m$Freq),] 
+patterns_m
+```
+
+```{r}
+## Estimar modelo
+f <- cbind(Electoral1, Electoral2, Electoral3, Electoral4, Electoral5, Activista1, Activista2, Activista3, Activista4, Activista5, Activista6, Compromiso1, Compromiso2, Compromiso3, Compromiso4)~1
+#help(poLCA) aqui creamos el vector de indicadores. 
+lca1 <- poLCA(f,T016, nclass=1, graphs=F)
+poLCA.entropy(lca1)
+
+set.seed(1234)
+lca2 <- poLCA(f,T016,nclass=2,graphs=F)
+poLCA.entropy(lca2)
+
+lca3 <- poLCA(f,T016, nclass=3,graphs=T) #LE PONGO TRUE AL GRAFICO PARA QUE ME MUESTRE LAS CLASES. 
+poLCA.entropy(lca3)
+
+lca4 <- poLCA(f,T016, nclass=4,graphs=F)
+poLCA.entropy(lca4)
+
+lca5 <- poLCA(f,T016, nclass=5,graphs=F)
+poLCA.entropy(lca5)
+```
+
+```{r}
+AIC.1 <-as.numeric(lca1$aic)
+AIC.2 <-as.numeric(lca2$aic)
+AIC.3 <-as.numeric(lca3$aic)
+AIC.4 <-as.numeric(lca4$aic)
+
+
+BIC.1 <-as.numeric(lca1$bic)
+BIC.2 <-as.numeric(lca2$bic)
+BIC.3 <-as.numeric(lca3$bic)
+BIC.4 <-as.numeric(lca4$bic)
+
+llik.1 <-as.numeric(lca1$llik)
+llik.2 <-as.numeric(lca2$llik)
+llik.3 <-as.numeric(lca3$llik)
+llik.4 <-as.numeric(lca4$llik)
+
+chisq.1 <- as.numeric(lca1$Chisq) #queremos que sea lo menos distinta posible de la esperada. 
+chisq.2 <- as.numeric(lca2$Chisq)
+chisq.3 <- as.numeric(lca3$Chisq)
+chisq.4 <- as.numeric(lca4$Chisq)
+
+G.1 <- as.numeric(lca1$Gsq)
+G.2 <- as.numeric(lca2$Gsq)
+G.3 <- as.numeric(lca3$Gsq)
+G.4 <- as.numeric(lca4$Gsq)
+
+n.obs1 <- as.numeric(lca1$Nobs)
+n.obs2 <- as.numeric(lca2$Nobs)
+n.obs3 <- as.numeric(lca3$Nobs)
+n.obs4 <- as.numeric(lca4$Nobs)
+
+#CreaciÃ³n de Vectores para TABLA DE COMPARACIÃ“N
+AIC <- c(AIC.1, AIC.2,AIC.3,AIC.4)
+BIC <- c(BIC.1, BIC.2,BIC.3,BIC.4)
+llik <- c(llik.1, llik.2,llik.3,llik.4)
+chi.cuadrado <- c(chisq.1, chisq.2,chisq.3,chisq.4)
+G2 <- c(G.1, G.2,G.3,G.4)
+N <- c(n.obs1, n.obs2,n.obs3,n.obs4)
+Modelos <- c("1 clase", "2 clases", "3 clases", "4 clases")
+
+```
+
+```{r}
+fit.indices <- data.frame(Modelos,AIC,BIC,llik,chi.cuadrado,G2,N)
+fit.indices
+```
+
+
+```{r}
+fit.lc2 <- data.frame(Modell=c("Model lc2"),
+                      BIC                         =lca2$bic,
+                      AIC                        = lca2$aic)
+
+fit.lc3 <- data.frame(Modell=c("Model lc3"),
+                      BIC                         =lca3$bic,
+                      AIC                        = lca3$aic)
+
+fit.lc4 <- data.frame(Modell=c("Model lc4"),
+                      BIC                         =lca4$bic,
+                      AIC                        = lca4$aic)
+
+fit.lc5 <- data.frame(Modell=c("Model lc5"),
+                      BIC                         =lca5$bic,
+                      AIC                        = lca5$aic)
+
+comp.fit.lca=rbind(fit.lc2,fit.lc3, fit.lc4, fit.lc5)
+print(comp.fit.lca) #hacemos una base de datos para comparar los estadisticos de ajuste de los modelos. 
+
+```
